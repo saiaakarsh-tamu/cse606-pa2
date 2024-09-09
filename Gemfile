@@ -23,11 +23,11 @@ gem "jbuilder"
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 group :production do
-  gem 'pg' # for Heroku deployment
+  gem "pg" # for Heroku deployment
 end
 
 group :development, :test do
-  gem 'sqlite3'
+  gem "sqlite3"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
