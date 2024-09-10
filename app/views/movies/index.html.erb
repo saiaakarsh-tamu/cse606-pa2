@@ -1,16 +1,161 @@
+<style>
+  .sorted-asc {
+    background-color: lightgreen;
+  }
+  .sorted-desc {
+    background-color: lightcoral;
+  }
+  .sort-indicator {
+    margin-left: 5px;
+    font-weight: bold;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  th, td {
+    padding: 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+    cursor: pointer;
+  }
+  h1 {
+    color: #333;
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #333;
+  }
+  
+  .actions {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .actions a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .actions a:hover {
+    background-color: #45a049;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  tr:hover {
+    background-color: #f5f5f5;
+  }
+</style>
+
 <p style="color: green"><%= notice %></p>
 
 <% content_for :title, "Movies" %>
 
 <h1>Movies</h1>
 
-<div id="movies">
-  <% @movies.each do |movie| %>
-    <%= render movie %>
-    <p>
-      <%= link_to "Show this movie", movie %>
-    </p>
-  <% end %>
+<table id="movies-table">
+  <thead>
+    <tr>
+      <th><a href="#" class="sort" data-sort="title">Title</a></th>
+      <th><a href="#" class="sort" data-sort="rating">Rating</a></th>
+      <th><a href="#" class="sort" data-sort="release_date">Release Date</a></th>
+      <th>Description</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @movies.each do |movie| %>
+      <tr>
+        <td><%= movie.title %></td>
+        <td><%= movie.rating %></td>
+        <td><%= movie.release_date %></td>
+        <td><%= truncate(movie.description, length: 100) %></td>
+        <td><%= link_to "Show details", movie %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="actions">
+  <%= link_to "Add new movie", new_movie_path %>
 </div>
 
-<%= link_to "New movie", new_movie_path %>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('movies-table');
+    const headers = table.querySelectorAll('th a.sort');
+
+    headers.forEach(header => {
+      header.addEventListener('click', (e) => {
+        e.preventDefault();
+        const column = header.dataset.sort;
+        sortTable(table, column);
+      });
+    });
+  });
+
+  function sortTable(table, column) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const header = table.querySelector(`th a[data-sort="${column}"]`);
+    
+    // Toggle the sorting direction
+    const isAscending = header.classList.toggle('asc');
+    header.classList.toggle('desc', !isAscending);
+
+    rows.sort((a, b) => {
+      let cellA = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+      let cellB = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+
+      if (column === 'release_date') {
+        cellA = new Date(cellA);
+        cellB = new Date(cellB);
+      }
+
+      if (cellA < cellB) return isAscending ? -1 : 1;
+      if (cellA > cellB) return isAscending ? 1 : -1;
+      return 0;
+    });
+
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+
+    updateSortIndicators(table.querySelectorAll('th a.sort'), header);
+  }
+
+  function getColumnIndex(column) {
+    switch (column) {
+      case 'title': return 1;
+      case 'rating': return 2;
+      case 'release_date': return 3;
+      default: return 1;
+    }
+  }
+
+  function updateSortIndicators(headers, activeHeader) {
+    headers.forEach(header => {
+      header.classList.remove('sorted-asc', 'sorted-desc');
+      const indicator = header.querySelector('.sort-indicator');
+      if (indicator) indicator.remove();
+    });
+
+    const isAscending = activeHeader.classList.contains('asc');
+    activeHeader.classList.add(isAscending ? 'sorted-asc' : 'sorted-desc');
+    const indicatorText = isAscending ? '↑' : '↓';
+    activeHeader.insertAdjacentHTML('beforeend', `<span class='sort-indicator'>${indicatorText}</span>`);
+  }
+</script>

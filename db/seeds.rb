@@ -18,9 +18,14 @@ more_movies = [
   {:title => 'Nomadland', :rating => 'R',
     :release_date => '19-Feb-2021'},
   {:title => 'CODA', :rating => 'PG-13',
-    :release_date => '13-Aug-2021'}
+    :release_date => '13-Aug-2021'},
+    {:title => 'Inception', :rating => 'PG-13',
+    :release_date => '16-Jul-2010'}
 ]
 
 more_movies.each do |movie|
-  Movie.create!(movie)
+  existing_movie = Movie.find_by(title: movie[:title])
+  if !existing_movie
+    Movie.create!(movie)
+  end
 end
