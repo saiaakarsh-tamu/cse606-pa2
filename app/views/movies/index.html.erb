@@ -95,67 +95,91 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const table = document.getElementById('movies-table');
     const headers = table.querySelectorAll('th a.sort');
 
     headers.forEach(header => {
-      header.addEventListener('click', (e) => {
-        e.preventDefault();
-        const column = header.dataset.sort;
-        sortTable(table, column);
-      });
+        header.addEventListener('click', (e) => {
+            e.preventDefault();
+            const column = header.dataset.sort;
+            sortTable(table, column);
+        });
     });
-  });
 
-  function sortTable(table, column) {
+    // Check for saved sort order
+    const savedColumn = localStorage.getItem('sortColumn');
+    const savedOrder = localStorage.getItem('sortOrder');
+    if (savedColumn && savedOrder) {
+        const header = document.querySelector(`th a.sort[data-sort="${savedColumn}"]`);
+        if (header) {
+            header.classList.add(savedOrder);
+            sortTable(table, savedColumn);
+        }
+    }
+
+    // Add the beforeunload event listener here
+    window.addEventListener('beforeunload', () => {
+        const activeHeader = document.querySelector('th a.sort.asc, th a.sort.desc');
+        if (activeHeader) {
+            const column = activeHeader.dataset.sort;
+            const order = activeHeader.classList.contains('asc') ? 'asc' : 'desc';
+            localStorage.setItem('sortColumn', column);
+            localStorage.setItem('sortOrder', order);
+        }
+    });
+});
+
+function sortTable(table, column) {
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
     const header = table.querySelector(`th a[data-sort="${column}"]`);
     
-    // Toggle the sorting direction
+    // Toggle sorting direction
     const isAscending = header.classList.toggle('asc');
     header.classList.toggle('desc', !isAscending);
 
     rows.sort((a, b) => {
-      let cellA = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
-      let cellB = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+        let cellA = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
+        let cellB = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent.trim();
 
-      if (column === 'release_date') {
-        cellA = new Date(cellA);
-        cellB = new Date(cellB);
-      }
+        if (column === 'release_date') {
+            cellA = new Date(cellA);
+            cellB = new Date(cellB);
+        }
 
-      if (cellA < cellB) return isAscending ? -1 : 1;
-      if (cellA > cellB) return isAscending ? 1 : -1;
-      return 0;
+        return (cellA < cellB ? -1 : cellA > cellB ? 1 : 0) * (isAscending ? 1 : -1);
     });
 
     tbody.innerHTML = '';
     rows.forEach(row => tbody.appendChild(row));
 
     updateSortIndicators(table.querySelectorAll('th a.sort'), header);
-  }
 
-  function getColumnIndex(column) {
+    // Save sort preferences
+    localStorage.setItem('sortColumn', column);
+    localStorage.setItem('sortOrder', isAscending ? 'asc' : 'desc');
+}
+
+function getColumnIndex(column) {
     switch (column) {
-      case 'title': return 1;
-      case 'rating': return 2;
-      case 'release_date': return 3;
-      default: return 1;
+        case 'title': return 1;
+        case 'rating': return 2;
+        case 'release_date': return 3;
+        default: return 1;
     }
-  }
+}
 
-  function updateSortIndicators(headers, activeHeader) {
+function updateSortIndicators(headers, activeHeader) {
     headers.forEach(header => {
-      header.classList.remove('sorted-asc', 'sorted-desc');
-      const indicator = header.querySelector('.sort-indicator');
-      if (indicator) indicator.remove();
+        header.classList.remove('sorted-asc', 'sorted-desc');
+        const indicator = header.querySelector('.sort-indicator');
+        if (indicator) indicator.remove();
     });
 
     const isAscending = activeHeader.classList.contains('asc');
     activeHeader.classList.add(isAscending ? 'sorted-asc' : 'sorted-desc');
     const indicatorText = isAscending ? '↑' : '↓';
     activeHeader.insertAdjacentHTML('beforeend', `<span class='sort-indicator'>${indicatorText}</span>`);
-  }
+}
 </script>
